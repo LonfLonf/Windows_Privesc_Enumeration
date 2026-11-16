@@ -1,7 +1,7 @@
 $services = Get-CimInstance Win32_Service | Where-Object -Property StartName -EQ "LocalSystem" | Select-Object Name
 $accessToken = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-$sids = $accessToken.Groups | ForEach-Object { $_.Value }
-$userSid += $accessToken.User.Value
+$sids = @($accessToken.Groups | ForEach-Object { $_.Value })
+$sids += $accessToken.User.Value
 
 foreach ($service in $services) {
     $serviceInfo = sc.exe sdshow $($service.Name)
@@ -14,7 +14,7 @@ foreach ($service in $services) {
             continue
         }
 
-        if ($ace.AccessMask -notin @("983551", "2")) {
+        if (($ace.AccessMask -band 0x0002) -eq 0) {
             continue
         }
 
